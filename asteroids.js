@@ -2,6 +2,8 @@ let canvas;
 let ctx;
 let canvasWidth = 1200;
 let canvasHeight = 670;
+let laserSound;
+let explosionSound;
 let ship;
 let keys = [];
 let bullets = [];
@@ -9,6 +11,9 @@ let asteroids = [];
 let score = 0;
 let lives = 3;
 let gameOver = false;
+
+let heartImage = new Image();
+heartImage.src = 'heart.png';
 
 document.addEventListener('DOMContentLoaded', SetupCanvas);
 
@@ -20,6 +25,8 @@ function SetupCanvas(){
     ctx.fillStyle = 'black';
     ctx.fillRect(0,0,canvas.width,canvas.height);
     ship = new Ship();
+    laserSound = new Audio('laser.wav');
+    explosionSound = new Audio('explosion.wav');
 
     for(let i = 0; i < 8; i++){
         asteroids.push(new Asteroid());
@@ -32,6 +39,8 @@ function SetupCanvas(){
         keys[e.key] = false;
         if (e.key === ' '){
             bullets.push(new Bullet(ship.angle));
+            laserSound.currentTime = 0; // Reset sound to start
+            laserSound.play();
         }
     });
     Render();
@@ -174,21 +183,13 @@ function CircleCollision(p1x,p1y,r1,p2x,p2y,r2){
         return false;
     }
 }
-
 function DrawLifeShips(){
     let startX = 0.98*canvasWidth;
     let startY = 10;
-    let points = [[9,9], [-9,9]];
-    ctx.strokeStyle = 'white';
-    for(let i = 0; i < lives; i++){
-        ctx.beginPath();
-        ctx.moveTo(startX,startY);
-        for(let j = 0; j < points.length; j++){
-            ctx.lineTo(startX + points[j][0], startY + points[j][1]);
-        }
-        ctx.closePath();
-        ctx.stroke();
-        startX -= 30;
+    let heartSize = 16; // Size of the heart icon
+
+    for (let i = 0; i < lives; i++) {
+        ctx.drawImage(heartImage, startX - (i * (heartSize + 5)), startY, heartSize, heartSize);
     }
 }
 
@@ -218,6 +219,8 @@ function Render() {
     if(asteroids.length !== 0){
         for(let k = 0; k < asteroids.length; k++){
             if(CircleCollision(ship.x,ship.y,11,asteroids[k].x,asteroids[k].y,asteroids[k].collisionRadius)){
+                explosionSound.currentTime = 0;
+                explosionSound.play();
                 ship.x = canvasWidth / 2;
                 ship.y = canvasHeight / 2;
                 ship.velX = 0;
@@ -231,6 +234,8 @@ function Render() {
             for(let l = 0; l < asteroids.length; l++){
                 for(let m = 0; m < bullets.length; m++){
                     if(CircleCollision(bullets[m].x,bullets[m].y,3,asteroids[l].x,asteroids[l].y,asteroids[l].collisionRadius)){
+                        explosionSound.currentTime = 0;
+                        explosionSound.play();
                         if (asteroids[l].level === 1){
                             asteroids.push(new Asteroid(asteroids[l].x - 5, asteroids[l].y - 5, 25,2,22));
                             asteroids.push(new Asteroid(asteroids[l].x + 5, asteroids[l].y + 5, 25,2,22));
